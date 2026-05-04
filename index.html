@@ -181,7 +181,6 @@
             text-decoration: underline;
         }
 
-        /* Plyr кастомизация под тёмную тему (по желанию) */
         :root {
             --plyr-color-main: #ff0000;
         }
@@ -228,7 +227,7 @@
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         // ⚠️ ЗАМЕНИТЕ НА СВОЙ Render URL (без слеша в конце)
-        const API_BASE = 'https://youtube-download-api-render.onrender.com';
+        const API_BASE = 'https://ваш-сервис.onrender.com';
 
         // Инициализация плеера
         const player = new Plyr('#player', {
@@ -275,7 +274,7 @@
                     btnText.textContent = 'Смотреть онлайн';
                 }
 
-                // Скрываем плеер при переключении, если он был показан
+                // Скрываем плеер при переключении
                 playerContainer.style.display = 'none';
                 player.source = null;
                 statusDiv.textContent = '';
@@ -283,7 +282,7 @@
             });
         });
 
-        // Главная кнопка действия
+        // Основное действие
         actionBtn.addEventListener('click', async () => {
             const url = urlInput.value.trim();
 
@@ -304,7 +303,7 @@
             actionBtn.disabled = true;
 
             if (currentMode === 'stream') {
-                // Режим "Смотреть онлайн"
+                // Режим просмотра онлайн
                 showStatus('Получаю прямую ссылку...');
                 try {
                     const response = await fetch(`${API_BASE}/api/stream`, {
@@ -330,16 +329,16 @@
                     };
 
                     playerContainer.style.display = 'block';
-                    showStatus(`✅ "${data.title}" готово к просмотру`);
+                    showStatus(`✅ "${data.title}" загружено`);
                 } catch (err) {
                     showStatus(`Ошибка: ${err.message}`, true);
                 } finally {
                     actionBtn.disabled = false;
                 }
             } else {
-                // Режимы скачивания (video / audio)
+                // Режим скачивания (video / audio)
                 const modeText = currentMode === 'audio' ? 'аудио' : 'видео';
-                showStatus(`Обрабатываю ${modeText}... Это может занять минуту.`);
+                showStatus(`Обрабатываю ${modeText}... Это может занять до минуты.`);
                 try {
                     const response = await fetch(`${API_BASE}/api/download`, {
                         method: 'POST',
@@ -379,7 +378,7 @@
             statusDiv.className = 'status' + (isError ? ' error' : '');
         }
 
-        // Автоочистка статуса при новом вводе
+        // Очистка статуса при новом вводе
         urlInput.addEventListener('input', () => {
             statusDiv.textContent = '';
             statusDiv.className = 'status';
