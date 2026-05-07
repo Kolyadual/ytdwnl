@@ -3,373 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✨ Мой YouTube Без Границ ✨</title>
-    <!-- Plyr CSS -->
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <title>YouTube Downloader</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #0d0d0d;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
             color: #fff;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 1.5rem;
+            padding: 1rem;
         }
-
         .container {
-            background: #1a1a1a;
-            border-radius: 20px;
-            padding: 2.2rem;
+            background: #1e1e1e;
+            padding: 2rem;
+            border-radius: 16px;
             width: 100%;
-            max-width: 780px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+            max-width: 520px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
-
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 0.2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        h1 span {
-            color: #ff0000;
-            font-size: 2.2rem;
-        }
-
-        .subtitle {
-            color: #aaa;
-            margin-bottom: 1.8rem;
-            font-size: 0.95rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #ccc;
-        }
-
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+        h1 span { color: #ff0000; }
+        .subtitle { color: #aaa; margin-bottom: 1.5rem; font-size: 0.95rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
         input[type="text"] {
             width: 100%;
-            padding: 0.9rem 1.1rem;
-            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
             border: 1px solid #333;
             background: #2a2a2a;
             color: #fff;
             font-size: 1rem;
-            margin-bottom: 1.3rem;
+            margin-bottom: 1rem;
             outline: none;
-            transition: border 0.2s, background 0.2s;
+            transition: border 0.2s;
         }
-
-        input[type="text"]:focus {
-            border-color: #ff4444;
-            background: #242424;
-        }
-
-        .formats {
-            display: flex;
-            gap: 0.8rem;
-            margin-bottom: 1.8rem;
-            flex-wrap: wrap;
-        }
-
+        input[type="text"]:focus { border-color: #ff4444; }
+        .formats { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
         .format-btn {
             flex: 1;
-            min-width: 100px;
-            padding: 0.75rem 0.5rem;
-            border-radius: 12px;
+            padding: 0.7rem;
+            border-radius: 10px;
             border: 1px solid #333;
             background: #2a2a2a;
             color: #fff;
             font-weight: 600;
-            font-size: 0.95rem;
             cursor: pointer;
             text-align: center;
-            transition: all 0.2s;
-            user-select: none;
+            transition: background 0.2s, border-color 0.2s;
         }
-
-        .format-btn:hover {
-            background: #3a3a3a;
-            border-color: #555;
-        }
-
-        .format-btn.active {
-            background: #ff0000;
-            border-color: #ff0000;
-            color: #fff;
-            box-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
-        }
-
-        .action-btn {
+        .format-btn.active { background: #ff0000; border-color: #ff0000; color: #fff; }
+        .download-btn {
             width: 100%;
             padding: 1rem;
-            border-radius: 14px;
+            border-radius: 12px;
             background: #ff0000;
             color: #fff;
             font-size: 1.1rem;
             font-weight: bold;
             border: none;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            margin-bottom: 1.3rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-        }
-
-        .action-btn:hover {
-            background: #cc0000;
-        }
-
-        .action-btn:active {
-            transform: scale(0.98);
-        }
-
-        .action-btn:disabled {
-            background: #444;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .status {
-            text-align: center;
-            font-size: 0.95rem;
-            color: #bbb;
-            min-height: 1.6rem;
+            transition: background 0.2s;
             margin-bottom: 1rem;
-            word-break: break-word;
         }
-
-        .status.error {
-            color: #ff6666;
-        }
-
-        .video-container {
-            margin-top: 1.2rem;
-            border-radius: 14px;
-            overflow: hidden;
-            background: #000;
-            display: none;
-        }
-
-        .example {
-            color: #777;
-            font-size: 0.85rem;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-
-        .example a {
-            color: #ff4444;
-            text-decoration: none;
-        }
-
-        .example a:hover {
-            text-decoration: underline;
-        }
-
-        :root {
-            --plyr-color-main: #ff0000;
-        }
+        .download-btn:hover { background: #cc0000; }
+        .download-btn:disabled { background: #555; cursor: not-allowed; }
+        .status { text-align: center; font-size: 0.95rem; color: #ccc; min-height: 1.5rem; }
+        .error { color: #ff6666; }
+        .example { color: #888; font-size: 0.85rem; margin-top: 1.5rem; }
+        a { color: #ff4444; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>
-            <span>▶</span> MyTube Freedom
-        </h1>
-        <p class="subtitle">Смотри и скачивай любые видео без ограничений</p>
+        <h1><span>▶</span> YouTube Loader</h1>
+        <p class="subtitle">Вставьте ссылку и скачайте видео или аудио</p>
 
-        <label for="urlInput">🔗 Ссылка на YouTube</label>
-        <input 
-            type="text" 
-            id="urlInput" 
-            placeholder="https://www.youtube.com/watch?v=... или https://youtu.be/..."
-            autocomplete="off"
-        >
+        <label for="urlInput">Ссылка на видео</label>
+        <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=...">
 
         <div class="formats">
-            <button class="format-btn active" data-mode="video">📥 Видео</button>
+            <button class="format-btn active" data-mode="video">🎬 Видео</button>
             <button class="format-btn" data-mode="audio">🎵 Аудио</button>
-            <button class="format-btn" data-mode="stream">▶️ Смотреть онлайн</button>
         </div>
 
-        <button class="action-btn" id="actionBtn">
-            <span id="btnIcon">📥</span> <span id="btnText">Скачать видео</span>
-        </button>
-
+        <button class="download-btn" id="downloadBtn">Скачать</button>
         <div class="status" id="status"></div>
 
-        <div class="video-container" id="playerContainer">
-            <video id="player" controls crossorigin playsinline></video>
-        </div>
-
-        <div class="example">
-            Пример: https://www.youtube.com/watch?v=dQw4w9WgXcQ<br>
-            <small>Работает через ваш личный сервер на Render</small>
-        </div>
+        <p class="example">Пример: https://www.youtube.com/watch?v=dQw4w9WgXcQ</p>
     </div>
 
-    <!-- Plyr JS -->
-    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        // ⚠️ ЗАМЕНИТЕ НА СВОЙ Render URL (без слеша в конце)
-        const API_BASE = 'https://youtube-download-api-render.onrender.com';
+        // ЗАМЕНИ НА СВОЙ URL
+        const API_BASE = 'https://твой-сервис.onrender.com';
 
-        // Инициализация плеера
-        const player = new Plyr('#player', {
-            controls: [
-                'play-large', 'play', 'progress', 'current-time', 
-                'mute', 'volume', 'captions', 'settings', 
-                'pip', 'airplay', 'fullscreen'
-            ],
-            settings: ['quality', 'speed', 'loop'],
-            quality: { 
-                default: 720, 
-                options: [4320, 2880, 2160, 1440, 1080, 720, 576, 480, 360, 240] 
-            },
-            i18n: { quality: 'Качество' }
-        });
-
-        // DOM-элементы
         const urlInput = document.getElementById('urlInput');
-        const actionBtn = document.getElementById('actionBtn');
-        const btnIcon = document.getElementById('btnIcon');
-        const btnText = document.getElementById('btnText');
+        const downloadBtn = document.getElementById('downloadBtn');
         const statusDiv = document.getElementById('status');
         const formatBtns = document.querySelectorAll('.format-btn');
-        const playerContainer = document.getElementById('playerContainer');
 
-        let currentMode = 'video'; // 'video', 'audio', 'stream'
+        let mode = 'video';
 
-        // Переключение режимов
         formatBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 formatBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                currentMode = btn.dataset.mode;
-
-                // Меняем текст кнопки и иконку
-                if (currentMode === 'video') {
-                    btnIcon.textContent = '📥';
-                    btnText.textContent = 'Скачать видео';
-                } else if (currentMode === 'audio') {
-                    btnIcon.textContent = '🎵';
-                    btnText.textContent = 'Скачать аудио';
-                } else if (currentMode === 'stream') {
-                    btnIcon.textContent = '▶️';
-                    btnText.textContent = 'Смотреть онлайн';
-                }
-
-                // Скрываем плеер при переключении
-                playerContainer.style.display = 'none';
-                player.source = null;
-                statusDiv.textContent = '';
-                statusDiv.className = 'status';
+                mode = btn.dataset.mode;
             });
         });
 
-        // Основное действие
-        actionBtn.addEventListener('click', async () => {
+        downloadBtn.addEventListener('click', async () => {
             const url = urlInput.value.trim();
-
-            // Сброс плеера при любом действии
-            playerContainer.style.display = 'none';
-            player.source = null;
-
             if (!url) {
-                showStatus('Введите ссылку на YouTube', true);
+                showStatus('Введите ссылку YouTube', true);
                 return;
             }
 
             if (!/(youtube\.com\/watch\?v=|youtu\.be\/)/i.test(url)) {
-                showStatus('Это не похоже на ссылку YouTube', true);
+                showStatus('Похоже, это не ссылка на YouTube видео', true);
                 return;
             }
 
-            actionBtn.disabled = true;
+            downloadBtn.disabled = true;
+            showStatus('Получаю информацию о видео...');
 
-            if (currentMode === 'stream') {
-                // Режим просмотра онлайн
-                showStatus('Получаю прямую ссылку...');
-                try {
-                    const response = await fetch(`${API_BASE}/api/stream`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ url })
-                    });
+            try {
+                const response = await fetch(`${API_BASE}/api/download`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url, mode: mode })
+                });
 
-                    if (!response.ok) {
-                        const errData = await response.json();
-                        throw new Error(errData.error || 'Ошибка сервера');
-                    }
-
-                    const data = await response.json();
-                    
-                    // Загружаем видео в плеер через прокси
-                    player.source = {
-                        type: 'video',
-                        sources: [{
-                            src: `${API_BASE}/api/video/${data.stream_id}`,
-                            type: 'video/mp4',
-                        }],
-                    };
-
-                    playerContainer.style.display = 'block';
-                    showStatus(`✅ "${data.title}" загружено`);
-                } catch (err) {
-                    showStatus(`Ошибка: ${err.message}`, true);
-                } finally {
-                    actionBtn.disabled = false;
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Ошибка API');
                 }
-            } else {
-                // Режим скачивания (video / audio)
-                const modeText = currentMode === 'audio' ? 'аудио' : 'видео';
-                showStatus(`Обрабатываю ${modeText}... Это может занять до минуты.`);
-                try {
-                    const response = await fetch(`${API_BASE}/api/download`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            url, 
-                            mode: currentMode 
-                        })
-                    });
 
-                    if (!response.ok) {
-                        const errData = await response.json();
-                        throw new Error(errData.error || 'Ошибка сервера');
-                    }
-
-                    const data = await response.json();
-                    
-                    // Программно запускаем скачивание
-                    const a = document.createElement('a');
-                    a.href = `${API_BASE}${data.download_url}`;
-                    a.download = data.filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    
-                    showStatus(`✅ Загрузка "${data.filename}" началась!`);
-                } catch (err) {
-                    showStatus(`Ошибка: ${err.message}`, true);
-                } finally {
-                    actionBtn.disabled = false;
-                }
+                const data = await response.json();
+                showStatus('Начинаю загрузку...');
+                
+                const a = document.createElement('a');
+                a.href = `${API_BASE}${data.download_url}`;
+                a.download = data.filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                
+                showStatus('Загрузка началась!');
+            } catch (err) {
+                showStatus(`Ошибка: ${err.message}`, true);
+            } finally {
+                downloadBtn.disabled = false;
             }
         });
 
@@ -377,12 +163,6 @@
             statusDiv.textContent = message;
             statusDiv.className = 'status' + (isError ? ' error' : '');
         }
-
-        // Очистка статуса при новом вводе
-        urlInput.addEventListener('input', () => {
-            statusDiv.textContent = '';
-            statusDiv.className = 'status';
-        });
     </script>
 </body>
 </html>
