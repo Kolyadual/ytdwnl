@@ -1,1 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Downloader</title>
+  <style>
+    body { font-family: Arial; max-width: 600px; margin: 2rem auto; padding: 1rem; }
+    input, select, button { width: 100%; padding: 0.5rem; margin: 0.5rem 0; box-sizing: border-box; }
+    #formats { display: none; }
+    .hidden { display: none; }
+    #status { color: #555; }
+  </style>
+</head>
+<body>
+  <h1>🎬 Загрузчик видео с YouTube</h1>
+  <p>Вставьте ссылку на видео:</p>
+  <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=...">
+  <button onclick="getFormats()">Показать форматы</button>
 
+  <div id="formats" class="hidden">
+    <h3 id="title"></h3>
+    <label for="formatSelect">Выберите качество:</label>
+    <select id="formatSelect"></select>
+    <button onclick="downloadVideo()">Скачать</button>
+  </div>
+  <p id="status"></p>
+
+  <script>
+    const API_BASE = 'https://твой-сервис.onrender.com'; // замени на свой URL
+
+    async function getFormats() {
+      const url = document.getElementById('url').value.trim();
+      if (!url) {
+        alert('Введите ссылку');
+        return;
+      }
+
+      document.getElementById('status').textContent = 'Загружаем информацию...';
+      try {
+        const response = await fetch(`${API_BASE}/formats?url=${encodeURIComponent(url)}`);
+        if (!response.ok) throw new Error(await response.text());
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        // Заполняем список форматов
+        const select = document.getElementById('formatSelect');
+        select.innerHTML = '';
+        data.formats.forEach(f => {
+          const option = document.createElement('option');
+          option.value = f.format_id;
+          const sizeText = f.filesize ? `${(f.filesize/1024/1024).toFixed(1)} MB` : 'неизвестно';
+          option.textContent = `${f.resolution} (${f.ext}) - ${sizeText}`;
+          select.appendChild(option);
+        });
+
+        document.getElementById('title').textContent = data.title;
+        document.getElementById('formats').classList.remove('hidden');
+        document.getElementById('status').textContent = '';
+      } catch (err) {
+        document.getElementById('status').textContent = `Ошибка: ${err.message}`;
+        console.error(err);
+      }
+    }
+
+    async function downloadVideo() {
+      const url = document.getElementById('url').value.trim();
+      const formatId = document.getElementById('formatSelect').value;
+      if (!url) return;
+
+      document.getElementById('status').textContent = 'Получаем прямую ссылку...';
+      try {
+        // Здесь мы просто открываем прямую ссылку в новой вкладке,
+        // потому что fetch с redirect: 'follow' скачает файл, а нам нужен переход.
+        const downloadUrl = `${API_BASE}/download?url=${encodeURIComponent(url)}&format_id=${formatId}`;
+        window.open(downloadUrl, '_blank');
+        document.getElementById('status').textContent = 'Загрузка должна начаться...';
+      } catch (err) {
+        document.getElementById('status').textContent = `Ошибка: ${err.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
