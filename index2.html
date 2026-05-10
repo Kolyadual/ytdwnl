@@ -96,12 +96,14 @@
     </div>
 
     <script>
-        const API_BASE = 'https://youtube-download-api-render.onrender.com'; // ← замени
+        // ⚠️ ЗАМЕНИ НА URL СВОЕГО ОСНОВНОГО СЕРВЕРА RENDER
+        const API_BASE = 'https://youtube-download-api-render.onrender.com';
 
         const urlInput = document.getElementById('urlInput');
         const downloadBtn = document.getElementById('downloadBtn');
         const statusDiv = document.getElementById('status');
         const formatBtns = document.querySelectorAll('.format-btn');
+
         let mode = 'video';
 
         formatBtns.forEach(btn => {
@@ -118,19 +120,20 @@
                 showStatus('Введите ссылку YouTube', true);
                 return;
             }
+
             if (!/(youtube\.com\/watch\?v=|youtu\.be\/)/i.test(url)) {
                 showStatus('Похоже, это не ссылка на YouTube видео', true);
                 return;
             }
 
             downloadBtn.disabled = true;
-            showStatus('Обрабатываю...');
+            showStatus('Обрабатываю видео...');
 
             try {
                 const response = await fetch(`${API_BASE}/api/download`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url, mode })
+                    body: JSON.stringify({ url: url, mode: mode })
                 });
 
                 if (!response.ok) {
@@ -140,12 +143,14 @@
 
                 const data = await response.json();
                 showStatus('Загрузка начинается...');
+
                 const a = document.createElement('a');
                 a.href = `${API_BASE}${data.download_url}`;
                 a.download = data.filename;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
+
                 showStatus('✅ Загрузка началась!');
             } catch (err) {
                 showStatus(`Ошибка: ${err.message}`, true);
