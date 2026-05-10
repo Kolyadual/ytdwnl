@@ -1,84 +1,163 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube Downloader</title>
-  <style>
-    body { font-family: Arial; max-width: 600px; margin: 2rem auto; padding: 1rem; }
-    input, select, button { width: 100%; padding: 0.5rem; margin: 0.5rem 0; box-sizing: border-box; }
-    #formats { display: none; }
-    .hidden { display: none; }
-    #status { color: #555; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .container {
+            background: #1e1e1e;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+        h1 span { color: #ff0000; }
+        .subtitle { color: #aaa; margin-bottom: 1.5rem; font-size: 0.95rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #2a2a2a;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus { border-color: #ff4444; }
+        .formats { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+        .format-btn {
+            flex: 1;
+            padding: 0.7rem;
+            border-radius: 10px;
+            border: 1px solid #333;
+            background: #2a2a2a;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .format-btn.active { background: #ff0000; border-color: #ff0000; color: #fff; }
+        .download-btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            background: #ff0000;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 1rem;
+        }
+        .download-btn:hover { background: #cc0000; }
+        .download-btn:disabled { background: #555; cursor: not-allowed; }
+        .status { text-align: center; font-size: 0.95rem; color: #ccc; min-height: 1.5rem; }
+        .error { color: #ff6666; }
+        .example { color: #888; font-size: 0.85rem; margin-top: 1.5rem; }
+        a { color: #ff4444; }
+    </style>
 </head>
 <body>
-  <h1>🎬 Загрузчик видео с YouTube</h1>
-  <p>Вставьте ссылку на видео:</p>
-  <input type="text" id="url" placeholder="https://www.youtube.com/watch?v=...">
-  <button onclick="getFormats()">Показать форматы</button>
+    <div class="container">
+        <h1><span>▶</span> YouTube Loader</h1>
+        <p class="subtitle">Вставьте ссылку и скачайте видео или аудио</p>
 
-  <div id="formats" class="hidden">
-    <h3 id="title"></h3>
-    <label for="formatSelect">Выберите качество:</label>
-    <select id="formatSelect"></select>
-    <button onclick="downloadVideo()">Скачать</button>
-  </div>
-  <p id="status"></p>
+        <label for="urlInput">Ссылка на видео</label>
+        <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=...">
 
-  <script>
-    const API_BASE = 'https://youtube-download-api-render.onrender.com'; // замени на свой URL
+        <div class="formats">
+            <button class="format-btn active" data-mode="video">🎬 Видео</button>
+            <button class="format-btn" data-mode="audio">🎵 Аудио</button>
+        </div>
 
-    async function getFormats() {
-      const url = document.getElementById('url').value.trim();
-      if (!url) {
-        alert('Введите ссылку');
-        return;
-      }
+        <button class="download-btn" id="downloadBtn">Скачать</button>
+        <div class="status" id="status"></div>
 
-      document.getElementById('status').textContent = 'Загружаем информацию...';
-      try {
-        const response = await fetch(`${API_BASE}/formats?url=${encodeURIComponent(url)}`);
-        if (!response.ok) throw new Error(await response.text());
-        const data = await response.json();
-        if (data.error) throw new Error(data.error);
+        <p class="example">Пример: https://www.youtube.com/watch?v=dQw4w9WgXcQ</p>
+    </div>
 
-        // Заполняем список форматов
-        const select = document.getElementById('formatSelect');
-        select.innerHTML = '';
-        data.formats.forEach(f => {
-          const option = document.createElement('option');
-          option.value = f.format_id;
-          const sizeText = f.filesize ? `${(f.filesize/1024/1024).toFixed(1)} MB` : 'неизвестно';
-          option.textContent = `${f.resolution} (${f.ext}) - ${sizeText}`;
-          select.appendChild(option);
+    <script>
+        const API_BASE = 'https://твой-сервис.onrender.com'; // ← замени
+
+        const urlInput = document.getElementById('urlInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const statusDiv = document.getElementById('status');
+        const formatBtns = document.querySelectorAll('.format-btn');
+        let mode = 'video';
+
+        formatBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                formatBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                mode = btn.dataset.mode;
+            });
         });
 
-        document.getElementById('title').textContent = data.title;
-        document.getElementById('formats').classList.remove('hidden');
-        document.getElementById('status').textContent = '';
-      } catch (err) {
-        document.getElementById('status').textContent = `Ошибка: ${err.message}`;
-        console.error(err);
-      }
-    }
+        downloadBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showStatus('Введите ссылку YouTube', true);
+                return;
+            }
+            if (!/(youtube\.com\/watch\?v=|youtu\.be\/)/i.test(url)) {
+                showStatus('Похоже, это не ссылка на YouTube видео', true);
+                return;
+            }
 
-    async function downloadVideo() {
-      const url = document.getElementById('url').value.trim();
-      const formatId = document.getElementById('formatSelect').value;
-      if (!url) return;
+            downloadBtn.disabled = true;
+            showStatus('Обрабатываю...');
 
-      document.getElementById('status').textContent = 'Получаем прямую ссылку...';
-      try {
-        // Здесь мы просто открываем прямую ссылку в новой вкладке,
-        // потому что fetch с redirect: 'follow' скачает файл, а нам нужен переход.
-        const downloadUrl = `${API_BASE}/download?url=${encodeURIComponent(url)}&format_id=${formatId}`;
-        window.open(downloadUrl, '_blank');
-        document.getElementById('status').textContent = 'Загрузка должна начаться...';
-      } catch (err) {
-        document.getElementById('status').textContent = `Ошибка: ${err.message}`;
-      }
-    }
-  </script>
+            try {
+                const response = await fetch(`${API_BASE}/api/download`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, mode })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Ошибка API');
+                }
+
+                const data = await response.json();
+                showStatus('Загрузка начинается...');
+                const a = document.createElement('a');
+                a.href = `${API_BASE}${data.download_url}`;
+                a.download = data.filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                showStatus('✅ Загрузка началась!');
+            } catch (err) {
+                showStatus(`Ошибка: ${err.message}`, true);
+            } finally {
+                downloadBtn.disabled = false;
+            }
+        });
+
+        function showStatus(message, isError = false) {
+            statusDiv.textContent = message;
+            statusDiv.className = 'status' + (isError ? ' error' : '');
+        }
+    </script>
 </body>
 </html>
