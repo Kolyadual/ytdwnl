@@ -3,33 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VidBee YouTube Downloader</title>
-    <link rel="stylesheet" href="style.css">
+    <title>YouTube Downloader</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 520px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #ff0000, #ff4d4d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            color: #aaa;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus {
+            border-color: #ff0000;
+        }
+        input::placeholder {
+            color: #888;
+        }
+        button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            white-space: nowrap;
+        }
+        button:hover:not(:disabled) {
+            background: #e60000;
+            transform: scale(1.02);
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status.info {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+        }
+        .status.error {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 0, 0, 0.2);
+        }
+        .status.success {
+            background: rgba(0, 255, 0, 0.1);
+            color: #6bff6b;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Скачать видео с YouTube</h1>
+        <h1>⬇️ Скачать видео с YouTube</h1>
+        <p class="subtitle">Вставьте ссылку и получите файл</p>
         <div class="input-group">
-            <input type="text" id="videoUrl" placeholder="Вставьте ссылку на видео...">
-            <button id="fetchBtn" onclick="fetchVideoInfo()">Проверить</button>
+            <input type="text" id="videoUrl" placeholder="https://www.youtube.com/watch?v=...">
+            <button id="downloadBtn" onclick="startDownload()">Скачать</button>
         </div>
-        <div id="info" class="info hidden">
-            <p><strong id="videoTitle"></strong></p>
-            <p id="videoDuration"></p>
-            <div class="btn-group">
-                <button onclick="downloadVideo()">Скачать видео</button>
-                <button onclick="downloadAudio()">Скачать аудио</button>
-            </div>
-        </div>
-        <div id="progress" class="progress hidden">
-            <div class="progress-bar" id="progressBar"></div>
-            <p id="progressText"></p>
-        </div>
-        <div id="downloadLink" class="download-link hidden">
-            <a id="fileLink" href="#" target="_blank">Сохранить файл</a>
-        </div>
-        <div id="error" class="error hidden"></div>
+        <div id="status" class="status hidden"></div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        const API_BASE = 'https://youtube-download-api-render.onrender.com';
+        const urlInput = document.getElementById('videoUrl');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const statusDiv = document.getElementById('status');
+
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.classList.remove('hidden');
+        }
+
+        function hideStatus() {
+            statusDiv.classList.add('hidden');
+        }
+
+        async function startDownload() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showStatus('Пожалуйста, вставьте ссылку на видео', 'error');
+                return;
+            }
+
+            // Блокируем кнопку и показываем процесс
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Загрузка...';
+            showStatus('Обработка запроса...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE}/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url }),
+                });
+
+                if (!response.ok) {
+                    let errorMsg = `Ошибка ${response.status}`;
+                    try {
+                        const errData = await response.json();
+                        if (errData.error) {
+                            errorMsg = errData.error;
+                        }
+                    } catch (e) {}
+                    throw new Error(errorMsg);
+                }
+
+                // Получаем файл и принудительно скачиваем
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+
+                // Пытаемся вытащить имя файла из заголовка Content-Disposition
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = 'video.mp4';
+                if (disposition) {
+                    const match = disposition.match(/filename="?(.+?)"?$/);
+                    if (match && match[1]) filename = match[1];
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+
+                showStatus('✅ Загрузка началась! Если нет — проверьте папку загрузок.', 'success');
+            } catch (error) {
+                showStatus(`❌ ${error.message}`, 'error');
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'Скачать';
+            }
+        }
+
+        // Разрешаем запуск по Enter
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startDownload();
+            }
+        });
+    </script>
 </body>
 </html>
