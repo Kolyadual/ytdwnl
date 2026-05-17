@@ -115,40 +115,9 @@
         }
         .status.success {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
             background: rgba(0, 255, 0, 0.1);
             color: #6bff6b;
             border: 1px solid rgba(0, 255, 0, 0.2);
-        }
-        .result-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .result-actions a, .result-actions button {
-            display: inline-block;
-            text-decoration: none;
-            color: white;
-            background: #333;
-            border: 1px solid #555;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .result-actions a:hover, .result-actions button:hover {
-            background: #555;
-        }
-        #player {
-            width: 100%;
-            max-width: 100%;
-            margin-top: 1rem;
-            border-radius: 12px;
-            display: none;
         }
         .hidden {
             display: none !important;
@@ -163,22 +132,21 @@
             <input type="text" id="urlInput" placeholder="Вставьте ссылку на видео...">
             <select id="typeSelect">
                 <option value="auto">Авто</option>
-                <option value="audio">Аудио</option>
-                <option value="video">Видео</option>
+                <option value="audio">Аудио (MP3)</option>
+                <option value="video">Видео (720p)</option>
+                <option value="video1080">Видео (1080p)</option>
             </select>
             <button id="fetchBtn" onclick="fetchMedia()">Скачать</button>
         </div>
         <div id="status" class="status"></div>
-        <video id="player" controls></video>
     </div>
 
     <script>
-        const API_BASE = 'https://cobalt-7-k2ya.onrender.com'; // Ваш Cobalt API
+        const API_BASE = 'https://cobalt-7-k2ya.onrender.com';
         const urlInput = document.getElementById('urlInput');
         const typeSelect = document.getElementById('typeSelect');
         const fetchBtn = document.getElementById('fetchBtn');
         const statusDiv = document.getElementById('status');
-        const player = document.getElementById('player');
 
         function showStatus(message, type = 'info') {
             statusDiv.innerHTML = message;
@@ -200,15 +168,19 @@
             }
 
             const type = typeSelect.value;
-            const isAudioOnly = type === 'audio';
-            const vQuality = type === 'video' ? '720p' : undefined;
-            const aFormat = isAudioOnly ? 'mp3' : undefined;
+            const body = { url: url };
+
+            if (type === 'audio') {
+                body.downloadMode = 'audio';
+            } else if (type === 'video') {
+                body.videoQuality = '720p';
+            } else if (type === 'video1080') {
+                body.videoQuality = '1080p';
+            }
 
             fetchBtn.disabled = true;
             fetchBtn.textContent = 'Загрузка...';
             hideStatus();
-            player.style.display = 'none';
-            player.src = '';
 
             try {
                 const response = await fetch(API_BASE, {
@@ -217,13 +189,7 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({
-                        url: url,
-                        isAudioOnly: isAudioOnly,
-                        vQuality: vQuality,
-                        aFormat: aFormat,
-                        filenamePattern: 'basic'
-                    })
+                    body: JSON.stringify(body)
                 });
 
                 if (!response.ok) {
@@ -233,48 +199,18 @@
 
                 const data = await response.json();
 
-                // Статус "tunnel" — основное поведение Cobalt 11
-                if (data.status === 'tunnel') {
-                    const downloadUrl = data.url;
-                    const filename = data.filename || 'download';
-
-                    statusDiv.innerHTML = `
-                        <div>✅ ${filename}</div>
-                        <div class="result-actions">
-                            <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer">⬇️ Скачать файл</a>
-                            <button onclick="playVideo('${downloadUrl}', '${type}')">▶️ Смотреть</button>
-                        </div>
-                        <small style="color: #aaa;">Ссылка временная, скачайте в течение часа</small>
-                    `;
-                    statusDiv.className = 'status success';
-                    statusDiv.style.display = 'flex';
-                }
-                // Статус "stream" — прямая ссылка на поток
-                else if (data.status === 'stream') {
-                    const downloadUrl = data.url;
-                    const filename = data.filename || 'download';
-
-                    statusDiv.innerHTML = `
-                        <div>✅ ${filename}</div>
-                        <div class="result-actions">
-                            <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer">⬇️ Скачать</a>
-                            <button onclick="playVideo('${downloadUrl}', '${type}')">▶️ Смотреть</button>
-                        </div>
-                    `;
-                    statusDiv.className = 'status success';
-                    statusDiv.style.display = 'flex';
-                }
-                // Статус "redirect" — открывается в новой вкладке
-                else if (data.status === 'redirect') {
+                if (data.status === 'tunnel' || data.status === 'stream') {
+                    showStatus(`✅ Загрузка файла "${data.filename}" начнётся автоматически...`, 'success');
+                    // Автоматически запускаем скачивание
+                    setTimeout(() => {
+                        window.location.href = data.url;
+                    }, 500); // небольшая задержка, чтобы пользователь увидел сообщение
+                } else if (data.status === 'redirect') {
                     window.open(data.url, '_blank');
                     showStatus('Открываем страницу загрузки...', 'info');
-                }
-                // Ошибка
-                else if (data.status === 'error') {
+                } else if (data.status === 'error') {
                     showStatus(`❌ ${data.text || 'Неизвестная ошибка сервера'}`, 'error');
-                }
-                // Неизвестный статус
-                else {
+                } else {
                     showStatus(`❌ Непредвиденный ответ: ${JSON.stringify(data)}`, 'error');
                 }
             } catch (error) {
@@ -289,17 +225,6 @@
             }
         }
 
-        function playVideo(url, type) {
-            if (type === 'audio') {
-                window.open(url, '_blank');
-                return;
-            }
-            player.src = url;
-            player.style.display = 'block';
-            player.play().catch(e => console.log('Автовоспроизведение заблокировано'));
-        }
-
-        // Запуск по Enter
         urlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') fetchMedia();
         });
