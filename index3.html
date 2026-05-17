@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cobalt Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        input, select, button {
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input {
+            flex: 2;
+        }
+        select {
+            flex: 1;
+            cursor: pointer;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            white-space: nowrap;
+        }
+        button:hover:not(:disabled) {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            margin-top: 1.5rem;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 48px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .status.info {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+        }
+        .status.error {
+            display: flex;
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 0, 0, 0.2);
+        }
+        .status.success {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 255, 0, 0.1);
+            color: #6bff6b;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+        }
+        .result-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .result-actions button {
+            background: #333;
+            border: 1px solid #555;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        #player {
+            width: 100%;
+            max-width: 100%;
+            margin-top: 1rem;
+            border-radius: 12px;
+            display: none;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ Cobalt Downloader</h1>
+        <p class="subtitle">Скачивайте видео и аудио с YouTube, TikTok, VK и других</p>
+        <div class="input-group">
+            <input type="text" id="urlInput" placeholder="Вставьте ссылку на видео...">
+            <select id="typeSelect">
+                <option value="auto">Авто</option>
+                <option value="audio">Аудио</option>
+                <option value="video">Видео</option>
+            </select>
+            <button id="fetchBtn" onclick="fetchMedia()">Скачать</button>
+        </div>
+        <div id="status" class="status"></div>
+        <video id="player" controls></video>
+    </div>
+
+    <script>
+        const API_BASE = 'https://cobalt-7-k2ya.onrender.com'; // Ваш URL
+        const urlInput = document.getElementById('urlInput');
+        const typeSelect = document.getElementById('typeSelect');
+        const fetchBtn = document.getElementById('fetchBtn');
+        const statusDiv = document.getElementById('status');
+        const player = document.getElementById('player');
+
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+            statusDiv.style.display = 'flex';
+        }
+
+        function hideStatus() {
+            statusDiv.style.display = 'none';
+            statusDiv.className = 'status';
+        }
+
+        async function fetchMedia() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showStatus('Пожалуйста, вставьте ссылку', 'error');
+                return;
+            }
+
+            const type = typeSelect.value;
+            const isAudioOnly = type === 'audio';
+            const vQuality = type === 'video' ? '720p' : undefined;
+            const aFormat = isAudioOnly ? 'mp3' : undefined;
+
+            fetchBtn.disabled = true;
+            fetchBtn.textContent = 'Загрузка...';
+            hideStatus();
+            player.style.display = 'none';
+            player.src = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: url,
+                        isAudioOnly: isAudioOnly,
+                        vQuality: vQuality,
+                        aFormat: aFormat,
+                        filenamePattern: 'basic'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success' || data.status === 'stream') {
+                    const downloadUrl = data.url;
+                    const filename = data.filename || 'download';
+
+                    statusDiv.innerHTML = `
+                        <div>✅ ${filename}</div>
+                        <div class="result-actions">
+                            <button onclick="window.open('${downloadUrl}', '_blank')">⬇️ Скачать</button>
+                            <button onclick="playVideo('${downloadUrl}', '${type}')">▶️ Смотреть</button>
+                        </div>
+                    `;
+                    statusDiv.className = 'status success';
+                    statusDiv.style.display = 'flex';
+                } else if (data.status === 'error') {
+                    showStatus(`❌ ${data.text || 'Неизвестная ошибка'}`, 'error');
+                } else {
+                    showStatus('❌ Непредвиденный ответ от сервера', 'error');
+                }
+            } catch (error) {
+                if (error.message.includes('Failed to fetch')) {
+                    showStatus('❌ Сервер недоступен. Возможно, он "просыпается" (подождите до 60 секунд).', 'error');
+                } else {
+                    showStatus(`❌ ${error.message}`, 'error');
+                }
+            } finally {
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = 'Скачать';
+            }
+        }
+
+        function playVideo(url, type) {
+            if (type === 'audio') {
+                // Для аудио просто открываем в новой вкладке (или можно встроить audio элемент)
+                window.open(url, '_blank');
+                return;
+            }
+            player.src = url;
+            player.style.display = 'block';
+            player.play().catch(e => console.log('Автовоспроизведение заблокировано'));
+        }
+
+        // Запуск по Enter
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fetchMedia();
+        });
+    </script>
+</body>
+</html>
