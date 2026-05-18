@@ -1,74 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>YT-DLP Web Player</title>
+    <title>YouTube Stream Player</title>
     <link href="https://vjs.zencdn.net/7.20.3/video-js.css" rel="stylesheet" />
     <style>
-        body { background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; text-align: center; }
-        input { width: 60%; padding: 10px; margin: 10px; }
-        button { padding: 10px 20px; background: #ff0000; color: white; border: none; cursor: pointer; }
-        #player { width: 80%; max-width: 800px; margin: 0 auto; }
+        body { background: #111; color: white; text-align: center; }
+        input { width: 60%; padding: 10px; }
+        button { padding: 10px 20px; }
+        #player { width: 80%; margin: 20px auto; }
     </style>
 </head>
 <body>
-    <h1>YT-DLP Web Player</h1>
-    <div>
-        <input type="text" id="url" placeholder="Вставьте ссылку на видео">
-        <button onclick="loadVideo()">Смотреть</button>
-        <button onclick="downloadVideo()">Скачать</button>
-    </div>
+    <h1>⚡ Мой YouTube-плеер</h1>
+    <input type="text" id="urlInput" placeholder="Ссылка на YouTube">
+    <button onclick="play()">Смотреть</button>
     <div id="player">
         <video id="video" class="video-js vjs-default-skin" controls></video>
     </div>
 
     <script src="https://vjs.zencdn.net/7.20.3/video.min.js"></script>
     <script>
-        const API_BASE = 'https://youtube-watch-api-render.onrender.com';
-
-        function loadVideo() {
-            const url = document.getElementById('url').value;
-            if (!url) return alert('Введите URL');
-
-            const player = videojs('video');
-            player.src({
-                src: `${API_BASE}/stream`,
-                type: 'video/mp4'
+        const API = 'https://youtube-watch-api-render.onrender.com/stream-url';
+        function play() {
+            const url = document.getElementById('urlInput').value;
+            fetch(API, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url: url})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.stream_url) {
+                    videojs('video').src({src: data.stream_url, type: 'video/mp4'});
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
             });
-
-            // Отправляем POST запрос для стриминга
-            fetch(`${API_BASE}/stream`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url })
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Ошибка загрузки видео');
-                player.src({ src: URL.createObjectURL(response.blob()), type: 'video/mp4' });
-                player.play();
-            })
-            .catch(error => alert(error.message));
-        }
-
-        function downloadVideo() {
-            const url = document.getElementById('url').value;
-            if (!url) return alert('Введите URL');
-
-            fetch(`${API_BASE}/download`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url })
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Ошибка скачивания');
-                return response.blob();
-            })
-            .then(blob => {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'video.mp4';
-                a.click();
-            })
-            .catch(error => alert(error.message));
         }
     </script>
 </body>
